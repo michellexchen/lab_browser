@@ -61,6 +61,7 @@ public class BrowserView {
     private Button myBackButton;
     private Button myNextButton;
     private Button myHomeButton;
+    private Button myFavoritesButton;
     // favorites
     private ComboBox<String> myFavorites;
     // get strings from resource file
@@ -84,19 +85,18 @@ public class BrowserView {
         enableButtons();
         // create scene to hold UI
         myScene = new Scene(root, DEFAULT_SIZE.width, DEFAULT_SIZE.height);
-        //myScene.getStylesheets().add(DEFAULT_RESOURCE_PACKAGE + STYLESHEET);
+        myScene.getStylesheets().add(DEFAULT_RESOURCE_PACKAGE + STYLESHEET);
     }
 
     /**
      * Display given URL.
      */
     public void showPage (String url) {
-        URL valid = myModel.go(url);
-        if (valid != null) {
-            update(valid);
-        }
-        else {
-            showError("Could not load " + url);
+        try {
+        	URL valid = myModel.go(url);
+        	update(valid);
+        } catch (BrowserException e) {
+        	showError(e.getMessage());
         }
     }
 
@@ -141,7 +141,8 @@ public class BrowserView {
 
     // change page to favorite choice
     private void showFavorite (String favorite) {
-        showPage(myModel.getFavorite(favorite).toString());
+    	String url = myModel.getFavorite(favorite).toString(); 
+        showPage(url);
         // reset favorites ComboBox so the same choice can be made again
         myFavorites.setValue(null);
     }
@@ -230,6 +231,19 @@ public class BrowserView {
             myModel.setHome();
             enableButtons();
         }));
+        
+        myFavoritesButton = makeButton("AddFavoriteCommand", event -> {
+        	addFavorite();
+        	enableButtons();
+        });
+        result.getChildren().add(myFavoritesButton);
+        result.getChildren().add(myFavorites);
+        
+        myFavorites.setOnAction((event) -> {
+            String selectedPerson = myFavorites.getSelectionModel().getSelectedItem();
+            showFavorite(selectedPerson);
+        });
+        
         return result;
     }
 
