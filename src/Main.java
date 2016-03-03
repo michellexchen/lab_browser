@@ -1,3 +1,5 @@
+import java.lang.reflect.InvocationTargetException;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -14,7 +16,7 @@ public class Main extends Application {
 
 
     @Override
-    public void start (Stage stage) {
+    public void start (Stage stage) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         // create program specific components
         BrowserModel model = new BrowserModel();
         BrowserView display = new BrowserView(model, "English");

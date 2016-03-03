@@ -1,7 +1,18 @@
 import java.awt.Dimension;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
+import javax.imageio.ImageIO;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.events.EventListener;
+import org.w3c.dom.events.EventTarget;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
@@ -23,12 +34,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
-import javax.imageio.ImageIO;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.events.EventListener;
-import org.w3c.dom.events.EventTarget;
 
 
 /**
@@ -71,8 +76,13 @@ public class BrowserView {
 
     /**
      * Create a view of the given model of a web browser.
+     * @throws SecurityException 
+     * @throws NoSuchMethodException 
+     * @throws InvocationTargetException 
+     * @throws IllegalArgumentException 
+     * @throws IllegalAccessException 
      */
-    public BrowserView (BrowserModel model, String language) {
+    public BrowserView (BrowserModel model, String language) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         myModel = model;
         // use resources for labels
         myResources = ResourceBundle.getBundle(DEFAULT_RESOURCE_PACKAGE + language);
@@ -184,7 +194,7 @@ public class BrowserView {
     }
 
     // organize user's options for controlling/giving input to model
-    private Node makeInputPanel () {
+    private Node makeInputPanel () throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         VBox result = new VBox();
         result.getChildren().addAll(makeNavigationPanel(), makePreferencesPanel());
         return result;
@@ -198,44 +208,33 @@ public class BrowserView {
     }
 
     // make user-entered URL/text field and back/next buttons
-    private Node makeNavigationPanel () {
+    private Node makeNavigationPanel () throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         HBox result = new HBox();
         // create buttons, with their associated actions
         // old style way to do set up callback (anonymous class)
-        myBackButton = makeButton("BackCommand", new EventHandler<ActionEvent>() {
-            @Override      
-            public void handle (ActionEvent event) {       
-                back();        
-            }      
-        });
+        myBackButton = makeButton("BackCommand",  "methodName");
         result.getChildren().add(myBackButton);
         // new style way to do set up callback (lambdas)
-        myNextButton = makeButton("NextCommand", event -> next());
+        myNextButton = makeButton("NextCommand", "methodName");
         result.getChildren().add(myNextButton);
-        myHomeButton = makeButton("HomeCommand", event -> home());
+        myHomeButton = makeButton("HomeCommand",  "methodName");
         result.getChildren().add(myHomeButton);
         // if user presses button or enter in text field, load/show the URL
         EventHandler<ActionEvent> showHandler = new ShowPage();
-        result.getChildren().add(makeButton("GoCommand", showHandler));
+        result.getChildren().add(makeButton("GoCommand",  "methodName"));
         myURLDisplay = makeInputField(40, showHandler);
         result.getChildren().add(myURLDisplay);
         return result;
     }
 
     // make buttons for setting favorites/home URLs
-    private Node makePreferencesPanel () {
+    private Node makePreferencesPanel () throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         HBox result = new HBox();
         myFavorites = new ComboBox<String>();
         // ADD REST OF CODE HERE
-        result.getChildren().add(makeButton("SetHomeCommand", event -> {
-            myModel.setHome();
-            enableButtons();
-        }));
+        result.getChildren().add(makeButton("SetHomeCommand",  "methodName"));
         
-        myFavoritesButton = makeButton("AddFavoriteCommand", event -> {
-        	addFavorite();
-        	enableButtons();
-        });
+        myFavoritesButton = makeButton("AddFavoriteCommand", "methodName");
         result.getChildren().add(myFavoritesButton);
         result.getChildren().add(myFavorites);
         
@@ -248,7 +247,7 @@ public class BrowserView {
     }
 
     // makes a button using either an image or a label
-    private Button makeButton (String property, EventHandler<ActionEvent> handler) {
+    private Button makeButton (String property, String method) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         // represent all supported image suffixes
         final String IMAGEFILE_SUFFIXES = 
             String.format(".*\\.(%s)", String.join("|", ImageIO.getReaderFileSuffixes()));
@@ -261,7 +260,14 @@ public class BrowserView {
         } else {
             result.setText(label);
         }
-        result.setOnAction(handler);
+        Method myMethod = getClass().getMethod(method, getClass());
+        result.setOnAction(e -> {try {
+			myMethod.invoke(this, this);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}});
+
         return result;
     }
 
